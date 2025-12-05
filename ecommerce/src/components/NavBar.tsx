@@ -1,0 +1,88 @@
+import { useState } from 'react'
+
+export const NavBar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  return (
+    <nav className="bg-white w-full border-b border-gray-200 fixed top-[38px] left-0 right-0 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <div className="shrink-0">
+            <a href="/" className="text-black text-2xl md:text-3xl font-bold leading-none">
+              SHOP.CO
+            </a>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
+            <a href="#" className="text-gray-700 hover:text-black transition-colors">Shop</a>
+            <a href="#" className="text-gray-700 hover:text-black transition-colors">On Sale</a>
+            <a href="#" className="text-gray-700 hover:text-black transition-colors">New Arrivals</a>
+            <a href="#" className="text-gray-700 hover:text-black transition-colors">Brands</a>
+          </div>
+
+          {/* Search Input */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
+            <div className="bg-[#f0f0f0] w-full flex items-center gap-3 px-4 py-3 rounded-[62px]">
+              <svg className="w-6 h-6 text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search for products..."
+                className="bg-transparent border-none outline-none text-base text-black/40 placeholder:text-black/40 w-full"
+              />
+            </div>
+          </div>
+
+          {/* Right side icons */}
+          <div className="flex items-center space-x-4">
+            {/* Profile */}
+            <button className="p-2 text-black hover:opacity-70 transition-opacity relative">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              <span className="absolute top-1 right-1 bg-black text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">0</span>
+            </button>
+            <button className="p-2 text-black hover:opacity-70 transition-opacity">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </button>
+
+            {/* Cart */}
+
+            {/* Menu toggle for mobile */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-gray-700 hover:text-black transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="flex flex-col space-y-4">
+              <a href="#" className="text-gray-700 hover:text-black transition-colors">Shop</a>
+              <a href="#" className="text-gray-700 hover:text-black transition-colors">On Sale</a>
+              <a href="#" className="text-gray-700 hover:text-black transition-colors">New Arrivals</a>
+              <a href="#" className="text-gray-700 hover:text-black transition-colors">Brands</a>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  )
+}
+
