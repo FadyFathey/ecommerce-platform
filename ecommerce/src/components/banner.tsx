@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const Banner = () => {
   const [isVisible, setIsVisible] = useState(true)
@@ -12,15 +13,13 @@ const Banner = () => {
         <span className="font-normal">
           Sign up and get 20% off to your first order.
         </span>
-        <a
-          href="#"
+        <Link
+          to="/signup"
           className="underline decoration-solid underline-offset-2 hover:opacity-80 transition-opacity"
-          onClick={(e) => {
-            e.preventDefault()
-          }}
+          onClick={() => setIsVisible(false)}
         >
           Sign Up Now
-        </a>
+        </Link>
       </p>
 
       <button

@@ -10,6 +10,7 @@ const HomePage = () => {
       <div className="pt-[102px] md:pt-[118px]">
         <Hero />
       </div>
+      
     </div>
   )
 }

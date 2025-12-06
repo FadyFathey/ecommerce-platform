@@ -5,6 +5,7 @@ import Signup from './pages/auth/Signup'
 import Login from './pages/auth/Login'
 import ForgotPassword from './pages/auth/ForgotPassword'
 
+
 function App() {
   return (
     <BrowserRouter>
