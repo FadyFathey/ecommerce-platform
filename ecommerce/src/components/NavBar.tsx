@@ -1,10 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAppDispatch } from '../store/hooks'
+import { checkUserLogin, userLogOut } from '../store/slices/authSlice'
+import toast from 'react-hot-toast'
+import { useSelector } from 'react-redux'
+import type { RootState } from '../store'
 
 export const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const dispatch = useAppDispatch()
+  const userSession = useSelector((state: RootState) => state.auth.session)
+  const navigate = useNavigate()
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -22,6 +30,28 @@ export const NavBar = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isProfileOpen])
+
+  useEffect(() => {
+    dispatch(checkUserLogin())
+  }, [])
+
+  useEffect(() => {
+    console.log("User Session:", userSession ? userSession.access_token : "")
+  }, [userSession])
+
+  // userLogOut FUN
+  const userLogOutFn = async () => {
+    setIsProfileOpen(false)
+
+    try {
+      await dispatch(userLogOut()).unwrap()
+      toast.success("Logged out successfully")
+      navigate("/")
+    } catch (error) {
+      const errorMessage = (error as any)?.message || "Failed to log out."
+      toast.error(errorMessage)
+    }
+  }
 
   return (
     <nav className="bg-white w-full border-b border-gray-200 fixed top-[38px] left-0 right-0 z-40">
@@ -59,56 +89,75 @@ export const NavBar = () => {
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
-            <button className="p-2 text-black hover:opacity-70 transition-opacity relative">
+            <button className="p-2 text-black hover:opacity-70 transition-opacity relative cursor-pointer">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
               </svg>
               <span className="absolute top-1 right-1 bg-black text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">0</span>
             </button>
 
-            {/* Profile */}
+            {/* Profile / Login & Sign Up */}
             <div className="relative" ref={profileRef}>
-              <button 
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="p-2 text-black hover:opacity-70 transition-opacity"
-                aria-label="Profile menu"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-              </button>
+              {userSession ? (
+                <>
+                  {/* Profile icon */}
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="p-2 text-black hover:opacity-70 transition-opacity cursor-pointer"
+                    aria-label="Profile menu"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                  </button>
 
-              {/* Profile Dropdown */}
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    My Profile
-                  </Link>
-                  <Link
-                    to="/orders"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    My Orders
-                  </Link>
-                  <Link
-                    to="/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    Settings
-                  </Link>
-                  <div className="border-t border-gray-200 my-1"></div>
+                  {/* Dropdown */}
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        My Profile
+                      </Link>
+                      <Link
+                        to="/orders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        My Orders
+                      </Link>
+                      <Link
+                        to="/settings"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        Settings
+                      </Link>
+
+                      <div className="border-t border-gray-200 my-1"></div>
+
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+                        onClick={userLogOutFn}
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* If NOT logged in */
+                <div className="flex items-center gap-3">
                   <Link
                     to="/login"
-                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsProfileOpen(false)}
+                    className="px-4 py-2 rounded-md bg-black text-white text-sm hover:opacity-80 transition"
                   >
-                    Sign Out
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="px-4 py-2 rounded-md border border-black text-sm hover:bg-black hover:text-white transition"
+                  >
+                    Sign Up
                   </Link>
                 </div>
               )}
@@ -146,4 +195,3 @@ export const NavBar = () => {
     </nav>
   )
 }
-
