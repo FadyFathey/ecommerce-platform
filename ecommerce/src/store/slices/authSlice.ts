@@ -3,8 +3,9 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Session, User } from '@supabase/supabase-js';
 
 import { supabase } from '../../lib/supabase';
+import { setRememberMe } from '../../lib/storage';
 
-import type { ILoggedUserData, ILoggedUserResponse, IUserType } from '../../../types/authTypes';
+import type { ILoggedUserData, ILoggedUserResponse, IUserType } from '../../types/authTypes';
 
 
 
@@ -19,6 +20,12 @@ interface AuthState {
   user: User | null;
 
   session: Session | null;
+
+  /**
+   * Becomes true after at least one auth check finishes. Prevents guards from
+   * redirecting before Supabase rehydrates the session on page refresh.
+   */
+  initialized: boolean;
 
   loading: boolean;
 
@@ -129,6 +136,8 @@ export const userLogin = createAsyncThunk<ILoggedUserResponse, ILoggedUserData>(
    async(userLoged:ILoggedUserData,thunkApi)=>
 
    {
+    // Set remember me preference before login
+    setRememberMe(userLoged.rememberMe || false)
 
     let { data, error } = await supabase.auth.signInWithPassword({
 
@@ -148,7 +157,7 @@ export const userLogin = createAsyncThunk<ILoggedUserResponse, ILoggedUserData>(
 
     
 
-    if(data.user)
+    if(data.user && data.session)
 
     {
 
@@ -161,6 +170,9 @@ export const userLogin = createAsyncThunk<ILoggedUserResponse, ILoggedUserData>(
       email: data.user.email || '',
 
       name: userName,
+
+      session: data.session,
+      user: data.user
 
       }
 
@@ -198,23 +210,38 @@ export const userLogOut = createAsyncThunk("auth/logout",async(_,thunkApi)=>
 
 
 export const checkUserLogin = createAsyncThunk<Session | null, void>("auth/check", async (_, thunkApi) => {
-
+  try {
+    // First, try to get the session from Supabase
+    const { data: { session }, error } = await supabase.auth.getSession();
     
-
-  const { data: { session }, error } = await supabase.auth.getSession();
-
-  
-
-  if (error) {
-
-      return thunkApi.rejectWithValue(error.message || "Failed to check session."); 
-
+    if (error) {
+      console.error('Session check error:', error);
+      // Don't reject immediately, try to refresh
+    }
+    
+    // If we have a session, return it
+    if (session) {
+      return session;
+    }
+    
+    // If no session, try to refresh using the refresh token
+    // This will work if we have a valid refresh token in storage
+    const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (refreshedSession && !refreshError) {
+      return refreshedSession;
+    }
+    
+    // If refresh also fails, return null (user needs to login)
+    if (refreshError) {
+      console.log('No valid session found, user needs to login');
+    }
+    
+    return null;
+  } catch (error: any) {
+    console.error('Error checking session:', error);
+    return thunkApi.rejectWithValue(error.message || "Failed to check session.");
   }
-
-  
-
-  return session; 
-
 });
 
 
@@ -279,16 +306,19 @@ export const resetPassword = createAsyncThunk<void, string>("auth/resetPassword"
   return;
 
 });
-
-
-
-// =========================================================================
-
-// INITIAL STATES
-
-// =========================================================================
-
-
+export const updateUser = createAsyncThunk<void, { name: string, phone: string }>("auth/updateUser", async ({ name, phone }, thunkApi) => {
+  const { error } = await supabase.auth.updateUser({
+    data: {
+      name: name,
+      phone: phone,
+    }
+  });
+  if (error) {
+    return thunkApi.rejectWithValue(error.message || "Failed to update user.");
+  }
+  
+  return;
+});
 
 const LoggedUserinitialState: ILoggedUserResponse = {
 
@@ -307,6 +337,8 @@ const initialState: AuthState = {
   user: null,
 
   session: null,
+
+  initialized: false,
 
   loading: false,
 
@@ -334,7 +366,19 @@ const authSlice = createSlice({
 
   initialState,
 
-  reducers: {},
+  reducers: {
+    setSession: (state, action) => {
+      state.session = action.payload;
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+    clearAuth: (state) => {
+      state.user = null;
+      state.session = null;
+      state.loggedUser = LoggedUserinitialState;
+    }
+  },
 
   extraReducers: (builder) => {
 
@@ -375,6 +419,7 @@ const authSlice = createSlice({
       {
 
         state.loading = true;
+        state.initialized = false;
 
         state.error = null;
 
@@ -385,16 +430,29 @@ const authSlice = createSlice({
         {
 
           state.loading = false;
+          state.initialized = true;
 
           state.error = null;
 
-          state.loggedUser=action.payload
-
+          state.loggedUser = {
+            id: action.payload.id,
+            email: action.payload.email,
+            name: action.payload.name
+          };
+          
+          // Set session and user if they exist in the payload
+          if ((action.payload as any).session) {
+            state.session = (action.payload as any).session;
+          }
+          if ((action.payload as any).user) {
+            state.user = (action.payload as any).user;
+          }
         })
 
       .addCase(userLogin.rejected, (state, action) => {
 
           state.loading = false;
+          state.initialized = true;
 
           state.error = (action.payload as string) || action.error.message || "Login failed";
 
@@ -407,6 +465,7 @@ const authSlice = createSlice({
         .addCase(userLogOut.pending, (state) => {
   
           state.loading = true;
+          state.initialized = false;
   
           state.error = null;
   
@@ -415,6 +474,7 @@ const authSlice = createSlice({
         .addCase(userLogOut.fulfilled, (state) => {
   
           state.loading = false;
+          state.initialized = true;
   
           state.error = null;
   
@@ -431,6 +491,7 @@ const authSlice = createSlice({
         .addCase(userLogOut.rejected, (state, action) => {
   
           state.loading = false;
+          state.initialized = true;
   
           // We generally keep the user logged in if logout fails unexpectedly
   
@@ -441,14 +502,31 @@ const authSlice = createSlice({
         .addCase(checkUserLogin.pending,(state)=>
           {
             state.loading = true;  
+            state.initialized = false;
             state.error = null;
           }).addCase(checkUserLogin.fulfilled,(state,action)=>
             {
               state.loading = false;
+              state.initialized = true;
               state.session=action.payload;
+              
+              // Also set user if session exists
+              if (action.payload?.user) {
+                state.user = action.payload.user;
+                state.loggedUser = {
+                  id: action.payload.user.id,
+                  email: action.payload.user.email || '',
+                  name: action.payload.user.user_metadata?.name || action.payload.user.raw_user_meta_data?.name || ''
+                };
+              } else {
+                // Clear user data if no session
+                state.user = null;
+                state.loggedUser = LoggedUserinitialState;
+              }
             }).addCase(checkUserLogin.rejected,(state,action)=>
               {
                 state.loading = false; 
+                state.initialized = true;
                 state.error = (action.payload as any)?.message || "Session check failed.";
                 state.session = null;
                state.user = null;

@@ -3,12 +3,13 @@ import { Link,  useNavigate } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../store/hooks"
 import type { RootState } from "../../store"
 import { userLogin } from "../../store/slices/authSlice"
-import type { ILoggedUserData } from "../../../types/authTypes"
+import type { ILoggedUserData } from "../../types/authTypes"
 import toast from "react-hot-toast"
 
 const Login = () => {
   const [email,setEmail] = useState("")
   const [password,setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
   const dispatch = useAppDispatch()
   const { loading, error } = useAppSelector((state: RootState) => state.auth)
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ const Login = () => {
     const loginData: ILoggedUserData = {
       email: email,
       password: password,
+      rememberMe: rememberMe,
     }
 
     const resultAction = await dispatch(userLogin(loginData))
@@ -71,8 +73,13 @@ const Login = () => {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-gray-700">
-              <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
+            <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-gray-300 text-black focus:ring-black cursor-pointer" 
+              />
               Remember me
             </label>
             <Link to="/forgot-password" className="text-gray-900 hover:opacity-80 font-medium">

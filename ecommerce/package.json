@@ -7,11 +7,20 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:storage": "node scripts/setup-storage.mjs",
+    "setup:storage:auto": "node scripts/setup-storage-auto.mjs",
+    "setup:complete": "node scripts/complete-setup.mjs",
+    "setup": "node scripts/setup-interactive.mjs",
+    "setup:key": "node scripts/setup-with-key.mjs",
+    "migrate:products": "node scripts/run-migration.mjs",
+    "migrate:execute": "node scripts/execute-full-migration.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@reduxjs/toolkit": "^2.11.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.0",
     "@supabase/supabase-js": "^2.86.2",
     "@tailwindcss/vite": "^4.1.17",
     "prop-types": "^15.8.1",
@@ -34,6 +43,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "supabase": "^2.67.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4"

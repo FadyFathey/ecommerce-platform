@@ -9,6 +9,7 @@ export type IUserType = {
   export type ILoggedUserData = {
     email: string;
     password: string;
+    rememberMe?: boolean;
   }
   export type ILoggedUserResponse = {
     id:string
